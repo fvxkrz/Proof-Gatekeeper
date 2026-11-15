@@ -1,38 +1,42 @@
 {
-  "format": "proof-gatekeeper-prep/v1",
-  "packaged_at_utc": "2026-11-15T05:37:28.059446+00:00",
-  "tests": {
-    "service_tests_passed": 137,
-    "failed": 0
+  "format": "proof-gatekeeper-delivery/v2",
+  "generated_utc": "2026-11-15T11:53:33.419501+00:00",
+  "source_repository": "https://github.com/fvxkrz/Proof-Gatekeeper",
+  "scope": "source sync for the deployed fail-closed Proof Gatekeeper service",
+  "verification": {
+    "typecheck": "passed",
+    "tests": {
+      "passed": 150,
+      "failed": 0
+    },
+    "build": "passed",
+    "replay": {
+      "real_groth16_proofs_generated_and_verified": 6,
+      "network": "MOCKED_ONLY",
+      "platform_encoding": "SYNTHETIC_ONLY",
+      "historical_reference": "MOCKED_ONLY",
+      "live_chain_finality_verified": false
+    },
+    "official_artifacts": "verified",
+    "production_dependency_audit_vulnerabilities": 0,
+    "independent_security_review": "passed; no concrete security concerns or logic errors reported for exact-width proof-reference guard"
   },
-  "typecheck": true,
-  "build": true,
-  "replay": {
-    "real_proofs_verified": 6,
-    "chain": "MOCKED_ONLY",
-    "platform_encoding": "SYNTHETIC_ONLY",
-    "historical_reference": "MOCKED_ONLY",
-    "live_chain_finality_verified": false
+  "deployment": {
+    "public_endpoint": "https://fvxkrz-agent.duckdns.org/agent",
+    "public_health_status": 200,
+    "public_readiness_status": 503,
+    "practice_observation": "one user-provided dashboard screenshot reports a correct REJECT; unscored only",
+    "competition_ready": false
   },
-  "official_artifacts_verified": true,
-  "production_audit_vulnerabilities": 0,
-  "independent_review": "passed, no concrete security concerns or logic errors reported for prior service implementation",
-  "competition_ready": false,
-  "readiness": 503,
-  "host_deploy_prep": {
-    "host_caddy_override": "validated YAML; app binds only to loopback",
-    "caddy_example": "validated with caddy validate",
-    "actual_vps_deployment": "not yet active: HMAC secret and Agent Games registration remain user-controlled"
-  },
-  "external_activation_blockers": [
-    "official task_id and condition VK encoding/accepted proof vector",
-    "authoritative historical proof_tx verification contract",
-    "accepted platform practice vector and live testnet finality",
-    "public Gatekeeper GitHub repository and dashboard preflight",
-    "dashboard HMAC secret and Kurier testnet API key"
+  "public_ci_for_this_snapshot": "pending push; workflow runs on GitHub after update",
+  "external_blockers": [
+    "official condition-VK and task-ID field encoding plus accepted platform proof vector",
+    "authoritative original proof_tx lookup and statement-binding/finality contract",
+    "live testnet Kurier finality with a testnet-registered decision verification key"
   ],
   "private_env_included": false,
-  "file_count": 59,
+  "local_verification_report_included": false,
+  "source_file_count": 63,
   "files": [
     {
       "path": ".dockerignore",
@@ -61,8 +65,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 14772,
-      "sha256": "a627e602401f94bf6ab7eeb97e0c197bf8dadc2d4e892cd556cfb5bb4482dcad"
+      "bytes": 16907,
+      "sha256": "a8522b0a568ab38a2dc78ce415e2633397ddcc0391e9d4bad8153b26934657d1"
     },
     {
       "path": "circuits/artifacts.manifest.json",
@@ -97,7 +101,7 @@
     {
       "path": "deploy/compose-host-caddy.yaml",
       "bytes": 178,
-      "sha256": "735c5399824ea49c6cfd1a199e6e4a0abf94ef8661327482b99112add1ff9ccf"
+      "sha256": "79889eb8df80566df31c47ee7b77d9428a3d0b15f3f8e0d8420cdcf43f4d9fc9"
     },
     {
       "path": "deploy/compose.yaml",
@@ -105,14 +109,19 @@
       "sha256": "2ac6c2603082a251e0442a33a3dcda1da3d37a41747d9e15e3a2102ba0f1c46d"
     },
     {
+      "path": "deploy/proof-gatekeeper.service.example",
+      "bytes": 1275,
+      "sha256": "6eda963e6973b0d2fe3241d0906685d3c0aaa35c3e8a550ace8babf435f37ca2"
+    },
+    {
       "path": "docs/PROTOCOL_GAPS.md",
-      "bytes": 7058,
-      "sha256": "a64d02096225dd0e6e717bbcbcadea84990f6e2c17ef97a69d6d0de162dfad5a"
+      "bytes": 7813,
+      "sha256": "63ddc258a5ad8acbc4afc96de9b1a57d188dd1084f510904a5490f0f810fc51c"
     },
     {
       "path": "docs/VERIFICATION.md",
-      "bytes": 4327,
-      "sha256": "bebf8caadd0516831677f7e87132ff8f116b1e5e73f383e3b08fe3862e9b22b6"
+      "bytes": 6004,
+      "sha256": "1447a1ceed777203a0efaa6aafe665ac68d8dceab4f6bab913087efd4fa0ce17"
     },
     {
       "path": "docs/official-build-snapshot.txt",
@@ -175,19 +184,24 @@
       "sha256": "21228f78177dd0a37aabf03db5bdcafa70701137206491a3d8d9c8d72759ca4d"
     },
     {
+      "path": "src/diagnostics.ts",
+      "bytes": 2304,
+      "sha256": "d38aeb2b425831bf18b40134495bd2b066988757b7a097688c6611ba99b81349"
+    },
+    {
       "path": "src/encoding.ts",
       "bytes": 2487,
       "sha256": "117d613cfa823403295609be59bc55ca3c9697fc57004d9f5c6d2069f1aebf3a"
     },
     {
       "path": "src/engine.ts",
-      "bytes": 6794,
-      "sha256": "2d5c621de7d183549d85076c1e2d176053c8c73c66434d63cf8fd4626a0d6300"
+      "bytes": 7207,
+      "sha256": "9e46d8f7ecb4cd24bff2ea41b626543cc3d856c40e7e8668b9a61902aa265501"
     },
     {
       "path": "src/main.ts",
-      "bytes": 2725,
-      "sha256": "30e1a10456143be3a7d0c9147701c2b68e032c3dcba69bed48b564303c1e9241"
+      "bytes": 2819,
+      "sha256": "43cde9dd57c75089c0f366bd2ddfef56067a1619c933560c4e860015c77075f9"
     },
     {
       "path": "src/policy.ts",
@@ -195,9 +209,14 @@
       "sha256": "7ac7ddf58845d4ab2393a7541d88116d0709082c8544cb2a43609efc23b59072"
     },
     {
+      "path": "src/proof-reference.ts",
+      "bytes": 259,
+      "sha256": "de4126dc664616a5879227aa6439c2c2e7eccf00db197f309780c1ebb1e6700e"
+    },
+    {
       "path": "src/protocol.ts",
-      "bytes": 2221,
-      "sha256": "03439043eca4146f29db31ffc3babbff3d01152b1ff6729114f878b111577b7b"
+      "bytes": 2440,
+      "sha256": "f226301c36755f0ec5b805edfa53312418cc3a27a9c9f10d0d4e84c4be147d4a"
     },
     {
       "path": "src/prover-child.ts",
@@ -211,13 +230,13 @@
     },
     {
       "path": "src/reference.ts",
-      "bytes": 2653,
-      "sha256": "232de81875b81783708544adbecf351ff3048a7ae3214e74ac34d1eb6f9eb44a"
+      "bytes": 2667,
+      "sha256": "5756cb8914e65d66b226e85c918b5b5b73dcdc58cd105bfdc2576875b0504dc7"
     },
     {
       "path": "src/server.ts",
-      "bytes": 7928,
-      "sha256": "046621b4d2b36b2055fe92224e1f80d0a453f855b9b524c4b4ae76a54b317271"
+      "bytes": 8590,
+      "sha256": "f58b4c56b1e1f20286438c036351ba8aeb0d1bc0fac80f26d0399ce37c712a5c"
     },
     {
       "path": "src/store.ts",
@@ -245,6 +264,11 @@
       "sha256": "cc22456bdd76331ab65c55a4c130b84f6fab03e0c48ebff4ff24fd7b28a58c82"
     },
     {
+      "path": "tests/diagnostics.test.ts",
+      "bytes": 6412,
+      "sha256": "12986ce79f21a3e52c3a92fc969ac1dbfafeb12b69dbc5700d1eb79812cf1487"
+    },
+    {
       "path": "tests/encoding.test.ts",
       "bytes": 1274,
       "sha256": "55ae805662c5b2e145e000c75e150dd56c6488d5293a21580c4be1b5db1f2d61"
@@ -266,8 +290,8 @@
     },
     {
       "path": "tests/main.test.ts",
-      "bytes": 641,
-      "sha256": "22a5d16a02033f9f7457d134ed20878fe13b56f8dc78d5bd04598df54ec7e8aa"
+      "bytes": 2895,
+      "sha256": "d741ad033b9cd8a7b03bb9c701e3bc7c677838a6de64b160d3e8794cf1416a2a"
     },
     {
       "path": "tests/policy.test.ts",
@@ -280,9 +304,14 @@
       "sha256": "a667df35373bd71ea5485c98bbb7cb9a36f637645ef56ccb290af088e2cbbd90"
     },
     {
+      "path": "tests/practice-reference.test.ts",
+      "bytes": 7702,
+      "sha256": "ffa52f95b08f17e7479f9c9007fd92ff96e8d640aed368a2739712414f9e4edd"
+    },
+    {
       "path": "tests/protocol.test.ts",
-      "bytes": 4895,
-      "sha256": "185ea90e070c89625dbfff75018c542b245d71dc30e0e1e728a647e28ee3d800"
+      "bytes": 4863,
+      "sha256": "0d9520a0e56123b2d4024d6d9aaf9cc8600195da18134e551f63695da958f62d"
     },
     {
       "path": "tests/prover.integration.test.ts",
@@ -323,11 +352,6 @@
       "path": "types/snarkjs.d.ts",
       "bytes": 575,
       "sha256": "19b04db76ed33b24a271e5ee4b795bf1c3bdb73dcff08bd33367538c3b30b539"
-    },
-    {
-      "path": "verification-report-local.json",
-      "bytes": 1199,
-      "sha256": "e2a2067858886014608e14844075e30ccf317567d3ca163e4fe795e30a039d47"
     }
   ]
 }

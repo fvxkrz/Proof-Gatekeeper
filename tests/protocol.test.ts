@@ -71,9 +71,9 @@ test('monetary fields require canonical uint32 decimal strings under local circu
   }
 });
 
-test('key, transaction, and recipient fields require full fixed-width 0x hex', () => {
+test('key and recipient fields require full fixed-width 0x hex', () => {
   for (const [field, bytes] of [
-    ['registered_vk', 32], ['proof_vk', 32], ['proof_tx', 32],
+    ['registered_vk', 32], ['proof_vk', 32],
     ['recipient', 20], ['condition_recipient', 20],
   ] as const) {
     for (const value of ['', '0xab...cd', '0x01', `0X${'ab'.repeat(bytes)}`, 'ab'.repeat(bytes), `0x${'gg'.repeat(bytes)}`, `0x${'ab'.repeat(bytes + 1)}`]) {

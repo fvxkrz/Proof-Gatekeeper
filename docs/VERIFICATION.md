@@ -3,7 +3,7 @@
 ## Executed locally
 
 - Strict TypeScript checking: passed (`npm run typecheck`).
-- Automated tests: **137 passed, 0 failed**, including nested security cases and
+- Automated tests: **150 passed, 0 failed**, including nested security cases and
   a portable-temporary-directory regression for clean CI users.
 - Compiled ESM build: passed (`npm run build`).
 - Replay harness: **6 actual Groth16 proofs generated and verified** with the
@@ -23,6 +23,26 @@
   parse errors, readiness 503 and safe default REJECT were verified.
 - `git diff --check`: passed.
 
+## Practice-reference fix
+
+- A signed dashboard practice task produced an authenticated `proof_tx` string
+  of length 34, which the previous exact-hash schema rejected with HTTP 400.
+- The wire schema now accepts a bounded opaque string without changing it. The
+  engine returns signed HTTP 200 `REJECT / REFERENCE_UNCONFIRMED` for anything
+  other than a canonical exact-width hash, before replay/cache access, lookups,
+  proof generation, or external submission. It does not pad, normalize, or claim
+  the opaque value is a transaction hash.
+- The proof-reference guard requires both exact 66-character width and hex syntax.
+  Authenticated tests cover short, malformed, padded, and line-terminated values,
+  exact references, cache-bypass attempts, both request modes, and evidence validation.
+- A compiled-runtime local smoke test confirmed signed 200 safety rejections for
+  a synthetic 34-character reference and a synthetic 67-character line-terminated
+  hash. These are unit/integration fixtures, not captured task contents or chain
+  verification evidence.
+- The new final implementation diff received an independent security review with
+  no concrete security concerns or logic errors. The review does not certify the
+  unresolved platform/chain contracts below.
+
 ## Review-driven regressions
 
 Independent review found a timeout/cache inconsistency and an insufficient gate
@@ -41,9 +61,9 @@ before changing implementation. Tests now cover:
   store failures and uncooperative dependencies fail closed.
 
 The final independent implementation re-review **passed**, with no reported
-security concerns or logic errors. The parent then reran the complete suite with
-an additional portability regression: **137 tests passed**. The implementation
-review does not certify the external compatibility/deployment prerequisites below.
+security concerns or logic errors. The complete suite then passed: **150 tests**.
+The implementation review does not certify the external compatibility/chain
+prerequisites below.
 
 ## Not executed / still blocked
 
@@ -53,20 +73,26 @@ review does not certify the external compatibility/deployment prerequisites belo
 - Original-transaction lookup/statement-binding has no published contract. The
   shipped entrypoint intentionally has no historical-reference adapter. Even an
   encoder plus Kurier credentials cannot activate approvals alone.
-- No live Kurier testnet key or dashboard HMAC secret was available. No testnet or
-  mainnet proof submission, payment, wallet signing, or dashboard action occurred.
-- No public HTTPS host/domain was deployed or registered. Local signed preflight
-  testing is not the platform's dashboard preflight.
+- No live Kurier testnet key or testnet-registered decision VK is configured.
+  No testnet or mainnet proof submission, payment, or wallet signing occurred.
+- The host Caddy/systemd service is deployed at the registered public HTTPS
+  endpoint. Public `/healthz` returned 200; the Agent Games dashboard delivered
+  at least one practice task whose screenshot reported a correct REJECT. A single
+  practice outcome does not validate all trap types, every proof path, or scored
+  round readiness. `/readyz` intentionally remains 503.
+- Dashboard HMAC values and other production credentials are stored only in the
+  host `.env` (permissions 0600), excluded from Git and not included here.
 - Docker is not installed here, so the container build/non-root read-only runtime
-  was not executed. A pinned GitHub Actions workflow performs those gates on a
-  Docker-capable runner. Node and Caddy image index digests were retrieved from
-  the official registry and checked against their manifest bytes.
+  was not executed locally. The pinned GitHub Actions workflow includes those
+  gates; verify its result for the exact source commit after the repository update
+  is pushed. Node and Caddy image index digests were retrieved from the official
+  registry and checked against their manifest bytes.
 
 ## Delivered behavior
 
-This is an implemented, tested, **fail-closed local service**, not a certified
+This is an implemented, tested, deployed **fail-closed service**, not a certified
 competition-ready agent. Secrets in `.env.example` are blank and `.env` is ignored.
 Startup refuses a missing dashboard secret. With a valid secret but unresolved
-proof prerequisites, preflight authentication works, `/readyz` stays 503, and
-transfer requests cannot receive APPROVE. See `README.md` and
+proof prerequisites, signed preflight/authentication works, `/readyz` stays 503,
+and transfer requests cannot receive APPROVE. See `README.md` and
 `docs/PROTOCOL_GAPS.md` before configuring deployment or entering a scored round.

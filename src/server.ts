@@ -2,6 +2,7 @@ import { performance } from 'node:perf_hooks';
 import Fastify, { LogController, type FastifyInstance, type FastifyReply, type FastifyRequest } from 'fastify';
 import { signBody, verifySignature } from './auth.js';
 import { parseEnvelope, type AgentResponse, type Task } from './protocol.js';
+import { summarizeEnvelopeFailure, type RejectionDiagnostic } from './diagnostics.js';
 
 export type ServerOptions = {
   secret: string;
@@ -14,11 +15,16 @@ export type ServerOptions = {
   clockSkewMs?: number;
   responseBudgetMs?: number;
   ready?: () => boolean;
+  onDiagnostic?: (diagnostic: RejectionDiagnostic) => void;
 };
 
 const SIGNATURE = 'x-agent-games-signature';
 
 export function createServer(options: ServerOptions): FastifyInstance {
+  const report = (diagnostic: RejectionDiagnostic): void => {
+    try { options.onDiagnostic?.(diagnostic); }
+    catch { /* Diagnostics cannot alter the signed safe response. */ }
+  };
   const app = Fastify({
     logger: false, logController: new LogController({ disableRequestLogging: true }), trustProxy: false,
     bodyLimit: options.bodyLimit ?? 64 * 1024, requestTimeout: 60_000,
@@ -123,20 +129,24 @@ export function createServer(options: ServerOptions): FastifyInstance {
     try {
       decoded = JSON.parse(raw.toString('utf8'));
     } catch {
+      report({ event: 'request_rejected', reason_code: 'INVALID_JSON', issues: [] });
       return reply.code(400).send({ decision: 'REJECT', reason_code: 'INVALID_JSON' });
     }
     let envelope;
     try {
       envelope = parseEnvelope(decoded);
-    } catch {
+    } catch (error) {
+      report(summarizeEnvelopeFailure(decoded, error));
       return reply.code(400).send({ decision: 'REJECT', reason_code: 'INVALID_ENVELOPE' });
     }
     const issued = Date.parse(envelope.issued_at);
     const current = (options.now ?? Date.now)();
     if (issued > current + (options.clockSkewMs ?? 5000)) {
+      report({ event: 'request_rejected', reason_code: 'FUTURE_TIMESTAMP', issues: [] });
       return reply.code(400).send({ decision: 'REJECT', reason_code: 'FUTURE_TIMESTAMP' });
     }
     if (current - issued > (options.maxTaskAgeMs ?? 60_000)) {
+      report({ event: 'request_rejected', reason_code: 'STALE_TIMESTAMP', issues: [] });
       return reply.code(400).send({ decision: 'REJECT', reason_code: 'STALE_TIMESTAMP' });
     }
     if (envelope.type === 'agent-games.preflight.v1') {

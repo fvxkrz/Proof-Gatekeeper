@@ -13,19 +13,25 @@ proof does not establish that those encodings match the platform's statement.
 No guessed hash/reduction is enabled. Until a reviewed official encoder is
 provided, valid-looking tasks receive signed `REJECT /
 PROTOCOL_ENCODING_UNCONFIRMED`, no invented proof, and `/readyz` returns 503.
-There is a separate mandatory historical-reference gate: the incoming `proof_tx`
-must independently resolve to its original finalized proof and matching statement.
-No authoritative lookup/binding contract is published. `src/main.ts` therefore
-leaves the internal `ReferenceVerifier` adapter disabled. Supplying an encoder
-and new-proof finalizer alone still cannot enable readiness or approval; with an
-encoder configured, the missing-reference rejection is `REFERENCE_UNCONFIRMED`.
-Do not activate this configuration for scored rounds: deliberate safe rejections
-and missing proofs can lose points.
+The incoming `proof_tx` is preserved exactly as an opaque wire reference (nonempty,
+up to 256 characters). A reference that is not an exact 32-byte `0x` transaction
+hash is never padded, trimmed, lowercased, or looked up: after HMAC authentication
+the service returns a signed HTTP 200 `REJECT / REFERENCE_UNCONFIRMED` before any
+replay-cache access, proof generation, or external submission. Exact hash syntax
+alone still does not prove that the original transaction is finalized or bound to
+the submitted statement. No authoritative lookup/binding contract is published.
+`src/main.ts` therefore leaves the internal `ReferenceVerifier` adapter disabled.
+Supplying an encoder and new-proof finalizer alone still cannot enable readiness
+or approval. Do not activate this configuration for scored rounds: deliberate
+safe rejections and missing proofs can lose points.
 
-The service and real circuit prover are implemented and locally testable. Public
-HTTPS deployment, dashboard preflight, accepted platform practice vectors, and
-real testnet finalization still require your hosting, dashboard secret, and
-Kurier testnet key. Those secrets belong in your hosting environment only.
+The service and real circuit prover are implemented and locally testable. The
+public endpoint `https://fvxkrz-agent.duckdns.org/agent` is deployed behind Caddy;
+public `/healthz` returns 200 and one dashboard practice result was reported as a
+correct REJECT. That test does not establish all trap vectors, approvals, or live
+zkVerify finality. The live `/readyz` intentionally remains 503. The exact
+platform-generated HMAC is stored only on the host; no credential is included in
+this repository.
 
 ## Source of truth
 
@@ -44,7 +50,13 @@ changed artifacts instead of silently trusting a changed proving key.
 
 - `src/server.ts`: raw-body HTTP handling, signed preflight/errors, timestamps,
   bounded request budget, health and readiness.
-- `src/auth.ts`, `src/protocol.ts`: strict hex HMAC and envelope validation.
+- `src/auth.ts`, `src/protocol.ts`: strict hex HMAC and envelope validation. The
+  opaque `proof_tx` wire string is bounded and preserved; only an exact-width
+  canonical hash can proceed to reference handling.
+- `src/proof-reference.ts`: exact 66-character/32-byte transaction-hash guard,
+  shared by the engine and the historical-evidence validator.
+- `src/diagnostics.ts`: bounded rejection summaries (schema paths, fixed codes,
+  value types and lengths only); never logs bodies, secrets, or unknown key names.
 - `src/policy.ts`: deterministic transfer checks; no model calls.
 - `src/store.ts`: atomic task/reference reservations, cached byte-for-byte results,
   durable SQLite WAL, persisted in-progress records fail closed after a crash.
@@ -54,12 +66,14 @@ changed artifacts instead of silently trusting a changed proving key.
 - `src/prover.ts`, `src/prover-child.ts`: killable subprocesses generate and verify
   real proofs using the pinned artifacts. They do not inherit API/HMAC secrets.
 - `src/zkverify.ts`: fixed official network hosts, proof submission and polling.
-- `src/engine.ts`: historical-reference gate, proof binding, replay protection,
+- `src/engine.ts`: fail-closed handling of opaque references before replay/cache
+  access, historical-reference gate, proof binding, replay protection,
   new-proof finality-before-approval, and transport-owned outcome recording.
 - `scripts/replay.ts`: local replay harness; synthetic tasks, real circuit proofs,
   explicitly simulated Kurier and historical-reference evidence. It does not claim
   on-chain finality or an independently resolved historical transaction.
-- `deploy/`: Docker image and Caddy automatic public HTTPS.
+- `deploy/`: Docker image, Caddy automatic public HTTPS, existing-host Caddy
+  override, and a hardened systemd unit example for a shared VPS.
 
 ## Install and exercise locally
 
@@ -171,6 +185,24 @@ The official Node and Caddy images are pinned to explicit SHA-256 index digests;
 review and verify new digests before updating those pins.
 The Docker/Caddy deployment requires a real host/domain and must be exercised
 there; local Node tests are not a public TLS deployment test.
+
+### Shared VPS with an existing host Caddy (systemd)
+
+For a VPS where Docker is unavailable and Caddy already owns ports 80/443, the
+live deployment can run the compiled Node service under `deploy/proof-gatekeeper.service.example`.
+That unit is an example: adjust its `User`, `Group`, and absolute project paths,
+then validate it with `systemd-analyze verify` before installing it. Keep the
+agent bound to loopback. Set `PORT` in the local `.env` to an unused loopback port
+and make the matching Caddy upstream agree (for the reference Tencent VPS setup,
+the service uses port 3001 because 3000 is occupied). Keep `.env` mode 0600 and
+out of Git, persist `data/`, then enable the unit. Do not stop or reconfigure an
+unrelated host service to free a port.
+
+The deployed endpoint's public `/healthz` has been verified as HTTP 200, and one
+dashboard practice result reported a correct REJECT. `/readyz` remains 503 until
+the official condition/task encodings and an authoritative historical-reference
+verification adapter exist; preflight and one practice response do not clear
+those gates.
 
 ### Existing host Caddy (e.g. the Tencent VPS already running Caddy)
 

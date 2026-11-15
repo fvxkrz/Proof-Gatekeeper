@@ -1,0 +1,43 @@
+[Unit]
+Description=Proof Gatekeeper Agent Games service (testnet, fail-closed)
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=/home/ubuntu/proof-gatekeeper/.env
+
+[Service]
+Type=simple
+# Adjust User, Group, and all absolute project paths for your host.
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/proof-gatekeeper
+Environment=NODE_ENV=production
+Environment=TMPDIR=/home/ubuntu/proof-gatekeeper/data/tmp
+# Keep this file mode 0600; never commit it.
+EnvironmentFile=/home/ubuntu/proof-gatekeeper/.env
+ExecStart=/usr/bin/node --enable-source-maps /home/ubuntu/proof-gatekeeper/dist/src/main.js
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=60s
+KillMode=control-group
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/ubuntu/proof-gatekeeper/data
+# Keep agent credentials and other local projects inaccessible to this process.
+InaccessiblePaths=/home/ubuntu/.hermes /home/ubuntu/.ssh
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+MemoryMax=768M
+MemorySwapMax=512M
+CPUQuota=100%
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target

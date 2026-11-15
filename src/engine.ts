@@ -6,6 +6,7 @@ import { assertPublicBinding, type Prover } from './prover.js';
 import type { Finalizer } from './zkverify.js';
 import type { SQLiteStore } from './store.js';
 import { configuredReferenceVerifier, validateReferenceEvidence, type ReferenceVerifier } from './reference.js';
+import { isCanonicalProofReference } from './proof-reference.js';
 
 interface Options { store: SQLiteStore; prover: Prover; encoder?: Encoder; finalizer?: Finalizer; referenceVerifier?: ReferenceVerifier; shutdownSignal?: AbortSignal; maxInFlight?: number; proofTimeoutMs?: number }
 export interface Engine {
@@ -52,6 +53,10 @@ export function createEngine(options: Options): Engine {
     handle: async (task, raw, signal) => {
       const expire = Math.min(Date.parse(task.deadline_at), Date.parse(task.issued_at) + 60_000);
       if (signal.aborted || options.shutdownSignal?.aborted || !Number.isFinite(expire) || Date.now() >= expire) return reject('TIMEOUT');
+      // Recognize the authenticated request without promoting an opaque practice
+      // reference into chain evidence, including through a legacy cached APPROVE.
+      // No lookup, canonicalization, replay reservation or proof work is allowed.
+      if (!isCanonicalProofReference(task.input.proof_tx)) return reject('REFERENCE_UNCONFIRMED');
       const bodyHash = createHash('sha256').update(raw).digest('hex');
       let reservation;
       try { reservation = options.store.reserve(task.task_id, bodyHash, task.input.proof_tx, Date.now()); }

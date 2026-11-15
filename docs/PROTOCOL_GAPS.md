@@ -59,12 +59,23 @@ a mapping collision between distinct VKs is rejected.
 
 ## Blocking: historical proof reference
 
-The official incoming example contains an arbitrary `proof_tx` transaction hash,
-but no original proof/public signal object, proof-system identifier, finalized
-block location, or documented historical-evidence lookup endpoint. One-use replay
-tracking and finalizing a newly generated proof do **not** validate the original
-reference. An authoritative original-proof lookup and statement-binding contract
-is required before activation; no remote route or attestation format is guessed.
+The official incoming example contains a `proof_tx` reference. A real signed
+practice request was observed with a 34-character string; length alone does not
+establish that it is a chain transaction hash. Transport accepts a nonempty string
+up to 256 characters (a local operational bound), preserving its contents exactly.
+A reference that is not a full 32-byte `0x` hash receives a signed HTTP 200 safety
+REJECT (`REFERENCE_UNCONFIRMED`) before replay storage, cache reads, lookup or proof
+work. It is never padded, truncated, case-normalized, resolved or promoted to
+finalized evidence. The evidence validator still requires complete hashes. This
+fixes the observed transport rejection, not proof coverage or platform practice
+acceptance; a proof-less rejection may still incur a game penalty.
+
+The public task contract does not include the original proof/public-signal object,
+proof-system identifier, finalized block location, or documented historical-evidence
+lookup endpoint. One-use replay tracking and finalizing a newly generated proof do
+**not** validate the original reference. An authoritative original-proof lookup and
+statement-binding contract is required before activation; no remote route or
+attestation format is guessed.
 
 `src/reference.ts` defines an **internal, local adapter interface**, not an
 extension of the platform or Kurier wire protocol. `createEngine` requires a

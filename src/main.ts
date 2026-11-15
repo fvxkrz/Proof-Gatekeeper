@@ -22,6 +22,7 @@ export async function startService(config = loadConfig()) {
     maxInFlight: config.maxInFlight, proofTimeoutMs: config.proofTimeoutMs });
   const server = createServer({ secret: config.secret, agentPath: config.agentPath, bodyLimit: config.bodyLimit,
     handler: engine.handle, onOutcome: engine.onOutcome,
+    onDiagnostic: diagnostic => { process.stdout.write(JSON.stringify(diagnostic) + '\n'); },
     ready: engine.ready, maxTaskAgeMs: config.maxTaskAgeMs, clockSkewMs: config.clockSkewMs, responseBudgetMs: config.responseBudgetMs });
   server.addHook('onClose', async () => { stop.abort(); store.close(); });
   try { await server.listen({ host: config.host, port: config.port }); }

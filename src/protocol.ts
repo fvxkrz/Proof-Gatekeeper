@@ -6,6 +6,9 @@ const uint32Decimal = z.string().refine(
   'Expected a canonical unsigned decimal within the local uint32 circuit domain',
 );
 const hash32 = z.string().regex(/^0x[0-9a-fA-F]{64}$/);
+// Authenticated practice can carry opaque references. This is a bounded wire
+// value only, not evidence of a valid chain transaction; never coerce or pad it.
+const proofReference = z.string().min(1).max(256);
 const address20 = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
 const uint32Block = z.number().int().min(0).max(4294967295);
 
@@ -20,7 +23,7 @@ const transferInputSchema = z.strictObject({
   condition_recipient: address20,
   amount: uint32Decimal,
   max_transfer: uint32Decimal,
-  proof_tx: hash32,
+  proof_tx: proofReference,
 });
 
 const taskSchema = z.strictObject({
