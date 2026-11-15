@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+coverage/
+data/
+*.db
+*.db-shm
+*.db-wal
+*.key
+*.pem
+artifacts-tmp/
+verification-report-local.json
