@@ -1,0 +1,6 @@
+# Override for a VPS that already runs Caddy on the host.
+# Start only `app`; keep the bundled Caddy container stopped.
+services:
+  app:
+    ports:
+      - "127.0.0.1:3000:3000"

@@ -1,0 +1,8 @@
+{$AGENT_DOMAIN} {
+	# Automatic public TLS. No access-log directive: HMAC headers are not logged.
+	reverse_proxy app:3000 {
+		transport http {
+			response_header_timeout 58s
+		}
+	}
+}
