@@ -50,6 +50,14 @@
   explicit practice opt-in and verifies a signed, locally proof-checked REJECT
   over loopback, while readiness remains 503. This only verifies configuration
   wiring and local cryptographic behavior.
+- After deploying the isolated release, a fresh randomized synthetic task was
+  sent through the real public HTTPS endpoint. It returned HTTP 200 with a signed
+  `RECIPIENT_MISMATCH` REJECT, Groth16 proof, 13 public signals and decision
+  signal 0; the proof was independently verified locally against the pinned
+  official verification key. No Kurier finalizer ran, no incoming proof reference
+  was echoed, and the request was not sent by Agent Games. Platform acceptance is
+  **not established** until a newly dispatched live practice task shows “Proof
+  VERIFIED” in the Agent Games result.
 - The new final implementation diff received an independent security review with
   no concrete security concerns or logic errors. The review does not certify the
   unresolved platform/chain contracts below.
@@ -87,11 +95,11 @@ certify the external compatibility/chain prerequisites below.
   encoder plus Kurier credentials cannot activate approvals alone.
 - No live Kurier testnet key or testnet-registered decision VK is configured.
   No testnet or mainnet proof submission, payment, or wallet signing occurred.
-- The host Caddy/systemd service is deployed at the registered public HTTPS
-  endpoint. Public `/healthz` returned 200; the Agent Games dashboard delivered
-  at least one practice task whose screenshot reported a correct REJECT. A single
-  practice outcome does not validate all trap types, every proof path, or scored
-  round readiness. `/readyz` intentionally remains 503.
+- The candidate-enabled Caddy/systemd release is deployed at the registered
+  public HTTPS endpoint. Public `/healthz` returned 200; the Agent Games dashboard
+  delivered an earlier practice task with a correct REJECT. The fresh synthetic
+  endpoint probe's proof verifies locally, but that is not platform acceptance.
+  `/readyz` intentionally remains 503; do not dispatch scored work.
 - The practice-only candidate encoder is opt-in in the host `.env` and disabled
   by default in `.env.example`. It is explicitly designed only for locally
   provable REJECT traps and cannot prove a valid request's false rejection. It

@@ -1,8 +1,8 @@
 {
   "format": "proof-gatekeeper-delivery/v4",
-  "generated_utc": "2026-11-15T19:41:55.942226+00:00",
+  "generated_utc": "2026-11-15T19:56:52.720122+00:00",
   "source_repository": "https://github.com/fvxkrz/Proof-Gatekeeper",
-  "source_branch": "main after reviewed practice-proof release",
+  "source_branch": "main (candidate branch implementation; deployment uses separately isolated release)",
   "scope": "opt-in unscored practice proofs for circuit-detectable REJECT traps; scored readiness remains fail-closed",
   "verification": {
     "typecheck": "passed",
@@ -18,7 +18,7 @@
       "historical_reference": "MOCKED_ONLY",
       "live_chain_finality_verified": false
     },
-    "practice_candidate_loopback": "real official-circuit Groth16 REJECT locally verified; entrypoint HTTP test passes; NOT Agent Games platform acceptance",
+    "practice_candidate_loopback": "deployed public HTTPS synthetic recipient-mismatch returned signed proof; independently verified locally against pinned official VK; NOT Agent Games platform acceptance",
     "official_artifacts": "verified",
     "production_dependency_audit_vulnerabilities": 0,
     "independent_review": "passed with no concrete security or logic concerns for scoped practice path"
@@ -26,7 +26,7 @@
   "practice_encoder": {
     "value": "sha256-vk-modp-taskid-sha256-modp-v1",
     "status": "unverified community candidate",
-    "enabled_on_host": "unscored practice only",
+    "enabled_on_host": "unscored practice only; platform acceptance pending",
     "selection_guard": "practice mode AND deterministic policy REJECT",
     "never_used_for": [
       "APPROVE",
@@ -38,7 +38,7 @@
   },
   "deployment": {
     "endpoint": "https://fvxkrz-agent.duckdns.org/agent",
-    "candidate_release": "pending deployment",
+    "candidate_release": "deployed in isolated systemd release; public synthetic proof passed local verification",
     "current_health_http": 200,
     "readiness_http": 503,
     "competition_ready": false
@@ -80,8 +80,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 17760,
-      "sha256": "35a9bf9ffa7c736c1f3d46aa123ed58e0dcd86c3689ed0df10815b7c8813d5db"
+      "bytes": 17887,
+      "sha256": "9aee91a1daa97b3719a6ab288f2e64f36919d17943cd5fcbca31cff00eae85c4"
     },
     {
       "path": "circuits/artifacts.manifest.json",
@@ -130,13 +130,13 @@
     },
     {
       "path": "docs/PROTOCOL_GAPS.md",
-      "bytes": 9324,
-      "sha256": "ee51ffbd1d6627e468581ad83e5ed62966c29bb73fd673698e9da613dd606a62"
+      "bytes": 9599,
+      "sha256": "491d62729be6af4614ef16831fb7b753b6a68481505e23aa93b0ccdbc070a842"
     },
     {
       "path": "docs/VERIFICATION.md",
-      "bytes": 7467,
-      "sha256": "924f0771aa9f487c8444025641eddabe5e6249fddfa768b79b297236b5073027"
+      "bytes": 8078,
+      "sha256": "b27320069d55effd6cb65afbcfeca7bb92b4e7fa060b6068b6d71184cad5455a"
     },
     {
       "path": "docs/official-build-snapshot.txt",
@@ -383,5 +383,6 @@
       "bytes": 575,
       "sha256": "19b04db76ed33b24a271e5ee4b795bf1c3bdb73dcff08bd33367538c3b30b539"
     }
-  ]
+  ],
+  "public_ci_for_this_commit": "workflow configured; CI will run for updated main commit after push"
 }

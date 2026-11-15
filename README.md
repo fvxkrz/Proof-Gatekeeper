@@ -6,33 +6,35 @@ executes this repository.
 
 ## Read this before deployment
 
-**This build is not cleared for scored competition.** The public official build
-page does not specify how `task_id` strings and 256-bit condition VK hashes map to
-`taskId`, `registeredVkHash`, and `proofVkHash` field elements. A locally valid
-proof does not establish that those encodings match the platform's statement.
-No guessed hash/reduction is enabled. Until a reviewed official encoder is
-provided, valid-looking tasks receive signed `REJECT /
-PROTOCOL_ENCODING_UNCONFIRMED`, no invented proof, and `/readyz` returns 503.
-The incoming `proof_tx` is preserved exactly as an opaque wire reference (nonempty,
-up to 256 characters) and used without alteration as a replay key. Exact 32-byte
-hash syntax alone does not prove that the original transaction is finalized or
-bound to the submitted statement. No authoritative lookup/binding contract is
-published, so `src/main.ts` leaves the internal `ReferenceVerifier` adapter
-disabled. A detectable circuit trap (such as recipient mismatch) can receive a
-local proof of REJECT in opted-in unscored practice; opaque references never enter
-the circuit witness. An otherwise-valid request is still rejected as
-`REFERENCE_UNCONFIRMED`, without proof. Supplying a candidate encoder and
-new-proof finalizer alone cannot enable readiness or approval. Do not activate
-this configuration for scored rounds: safe rejections or missing proofs can lose
-points.
+**Not ready for scored competition.** The organizer has not published the
+condition-VK and task-ID mappings into the BN128 circuit fields or an accepted
+proof vector. There is no official/production encoder. The live host has a
+separately labeled community-candidate encoder enabled for **unscored practice
+REJECT traps only**. It can generate and locally verify a real Groth16 proof when
+the public numeric fields satisfy a circuit rejection (for example,
+`RECIPIENT_MISMATCH`). A fresh synthetic request has now traversed the deployed
+HTTPS endpoint and its returned proof verified locally against the pinned
+official verification key. This does not prove the organizer uses the same
+mapping or that the Agent Games dashboard accepted it; only a real practice
+task displaying “Proof VERIFIED” can establish that candidate for that task.
+The candidate cannot handle approvals or competition requests and never makes
+`/readyz` ready.
 
-The service and real circuit prover are implemented and locally testable. The
-public endpoint `https://fvxkrz-agent.duckdns.org/agent` is deployed behind Caddy;
-public `/healthz` returns 200 and one dashboard practice result was reported as a
-correct REJECT. That test does not establish all trap vectors, approvals, or live
-zkVerify finality. The live `/readyz` intentionally remains 503. The exact
-platform-generated HMAC is stored only on the host; no credential is included in
-this repository.
+The incoming `proof_tx` is preserved exactly as an opaque wire reference and used
+as a replay key. It is not a signal in the Gatekeeper circuit, so a practice trap
+proof does not certify that original reference. An otherwise-valid request cannot
+receive APPROVE without an authoritative historical-reference verifier binding
+it to its finalized proof statement; none is configured. `/readyz` therefore
+remains 503. Do not use this candidate for scored rounds: proof compatibility,
+all practice traps, and original-reference verification remain unconfirmed.
+
+The service and real circuit prover are deployed behind Caddy at
+`https://fvxkrz-agent.duckdns.org/agent`; public `/healthz` returns 200. A prior
+dashboard practice result reported a correct REJECT, and the fresh synthetic
+hosted test confirmed real local Groth16 verification. Neither establishes
+platform acceptance, all trap vectors, approvals, or live zkVerify finality. The
+live `/readyz` intentionally remains 503. The exact platform-generated HMAC is
+stored only on the host; no credential is included in this repository.
 
 ## Source of truth
 

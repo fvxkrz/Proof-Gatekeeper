@@ -62,9 +62,12 @@ is organizer-confirmed. The candidate is restricted in code to mode `practice`
 and policy decisions that are REJECT. It is never used for any APPROVE, any
 competition-mode request, Kurier submission, `/readyz`, or a cache of approvals.
 The host `.env` is now configured to opt into this for unscored practice only;
-that mapping remains unverified by Agent Games. Only a practice checker result
-for a real task can establish platform acceptance; local Groth16 verification
-alone cannot.
+that mapping remains unverified by Agent Games. A fresh randomized synthetic
+request through the deployed HTTPS endpoint returned a signed Groth16 REJECT and
+the response proof independently verified locally against the official pinned
+verification key. This proves hosted plumbing and local circuit validity only,
+not that the practice checker re-derived the same encoding. Only a real practice
+checker result can establish platform acceptance.
 To disable this experiment, remove `PRACTICE_ENCODER` from the host `.env` and
 restart the service. Already-completed identical task retries continue to return
 their cached signed bytes (including any practice proof) to preserve HTTP
