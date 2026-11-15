@@ -20,7 +20,7 @@ function transfer(overrides: Partial<TransferInput> = {}): TransferInput {
   };
 }
 
-const approved = { decision: 'APPROVE', reason_code: 'ALL_CHECKS_PASSED' };
+const approved = { decision: 'APPROVE', reason_code: 'VALID_CONDITION' };
 
 function rejected(reason_code: string) {
   return { decision: 'REJECT', reason_code };
@@ -32,8 +32,8 @@ test('fails closed for non-object transfer input even without schema validation'
   }
 });
 
-test('rejects malformed hash or address fields before policy checks', () => {
-  for (const field of ['registered_vk', 'proof_vk', 'proof_tx', 'recipient', 'condition_recipient'] as const) {
+test('rejects malformed condition-key or address fields before policy checks', () => {
+  for (const field of ['registered_vk', 'proof_vk', 'recipient', 'condition_recipient'] as const) {
     const width = field === 'recipient' || field === 'condition_recipient' ? 20 : 32;
     const invalid: unknown[] = ['', '0x1', `0x${'aa'.repeat(width - 1)}`, `0x${'aa'.repeat(width + 1)}`, `0x${'gg'.repeat(width)}`, `0X${'aa'.repeat(width)}`, 'aa'.repeat(width), `0x${'aa'.repeat(width)}\n`, null, undefined, 1, {}];
     for (const value of invalid) {
@@ -50,7 +50,7 @@ test('rejects block values outside integer uint32 before policy checks', () => {
     }
   }
   assert.deepEqual(evaluatePolicy(transfer({ current_block: 0, expiry_block: 4294967295 })), approved);
-  assert.deepEqual(evaluatePolicy(transfer({ current_block: 0, expiry_block: 0 })), rejected('PROOF_EXPIRED'));
+  assert.deepEqual(evaluatePolicy(transfer({ current_block: 0, expiry_block: 0 })), rejected('EXPIRED_CONDITION'));
 });
 
 test('rejects noncanonical or out-of-uint32 monetary fields before policy checks', () => {
@@ -66,8 +66,8 @@ test('rejects noncanonical or out-of-uint32 monetary fields before policy checks
 });
 
 test('rejects amounts strictly above the transfer limit using numeric comparison', () => {
-  assert.deepEqual(evaluatePolicy(transfer({ amount: '26' })), rejected('AMOUNT_EXCEEDS_LIMIT'));
-  assert.deepEqual(evaluatePolicy(transfer({ amount: '100', max_transfer: '9' })), rejected('AMOUNT_EXCEEDS_LIMIT'));
+  assert.deepEqual(evaluatePolicy(transfer({ amount: '26' })), rejected('AMOUNT_OVERFLOW'));
+  assert.deepEqual(evaluatePolicy(transfer({ amount: '100', max_transfer: '9' })), rejected('AMOUNT_OVERFLOW'));
   assert.deepEqual(evaluatePolicy(transfer({ amount: '9', max_transfer: '100' })), approved);
 });
 
@@ -85,7 +85,7 @@ test('rejects expiry at equality or later before recipient and amount failures',
   for (const current_block of [10, 11, 4294967295]) {
     assert.deepEqual(evaluatePolicy(transfer({
       current_block, recipient: `0x${'34'.repeat(20)}`, amount: '26',
-    })), rejected('PROOF_EXPIRED'));
+    })), rejected('EXPIRED_CONDITION'));
   }
 });
 
@@ -93,7 +93,7 @@ test('rejects insufficient balance before expiry, recipient, and amount failures
   assert.deepEqual(evaluatePolicy(transfer({
     public_balance: '99', current_block: 10,
     recipient: `0x${'34'.repeat(20)}`, amount: '26',
-  })), rejected('INSUFFICIENT_BALANCE'));
+  })), rejected('THRESHOLD_MISMATCH'));
 });
 
 test('compares condition verification keys by bytes, ignoring hex case', () => {

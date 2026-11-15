@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import { closeSync, constants, mkdirSync, openSync } from 'node:fs';
 import { dirname } from 'node:path';
 import Database from 'better-sqlite3';
+import { isCanonicalProofReference } from './proof-reference.js';
 
 export type ReserveResult =
   | { kind: 'fresh'; lease: string }
@@ -37,7 +38,7 @@ export class SQLiteStore {
   }
 
   reserve(taskId: string, bodyHash: string, proofRef: string, nowMs: number): ReserveResult {
-    const canonicalProofRef = proofRef.toLowerCase();
+    const canonicalProofRef = isCanonicalProofReference(proofRef) ? proofRef.toLowerCase() : proofRef;
     return this.db.transaction((): ReserveResult => {
       const existing = this.db.prepare<[string], { body_hash: string; status: string; body: string | null }>(
         'SELECT body_hash, status, body FROM reservations WHERE task_id = ?',

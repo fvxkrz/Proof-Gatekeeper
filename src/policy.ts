@@ -23,7 +23,8 @@ export function evaluatePolicy(input: TransferInput): PolicyResult {
     typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 0xffff_ffff)) {
     return { decision: 'REJECT', reason_code: 'INVALID_INPUT' };
   }
-  const hashes = [input.registered_vk, input.proof_vk, input.proof_tx];
+  // proof_tx is a separate opaque replay/evidence reference, not a circuit input.
+  const hashes = [input.registered_vk, input.proof_vk];
   const addresses = [input.recipient, input.condition_recipient];
   if (!hashes.every(value => typeof value === 'string' && /^0x[0-9a-fA-F]{64}$/.test(value))
     || !addresses.every(value => typeof value === 'string' && /^0x[0-9a-fA-F]{40}$/.test(value))) {
@@ -33,16 +34,16 @@ export function evaluatePolicy(input: TransferInput): PolicyResult {
     return { decision: 'REJECT', reason_code: 'VK_SUBSTITUTION' };
   }
   if (BigInt(input.public_balance) < BigInt(input.minimum)) {
-    return { decision: 'REJECT', reason_code: 'INSUFFICIENT_BALANCE' };
+    return { decision: 'REJECT', reason_code: 'THRESHOLD_MISMATCH' };
   }
   if (input.current_block >= input.expiry_block) {
-    return { decision: 'REJECT', reason_code: 'PROOF_EXPIRED' };
+    return { decision: 'REJECT', reason_code: 'EXPIRED_CONDITION' };
   }
   if (input.recipient.toLowerCase() !== input.condition_recipient.toLowerCase()) {
     return { decision: 'REJECT', reason_code: 'RECIPIENT_MISMATCH' };
   }
   if (BigInt(input.amount) > BigInt(input.max_transfer)) {
-    return { decision: 'REJECT', reason_code: 'AMOUNT_EXCEEDS_LIMIT' };
+    return { decision: 'REJECT', reason_code: 'AMOUNT_OVERFLOW' };
   }
-  return { decision: 'APPROVE', reason_code: 'ALL_CHECKS_PASSED' };
+  return { decision: 'APPROVE', reason_code: 'VALID_CONDITION' };
 }

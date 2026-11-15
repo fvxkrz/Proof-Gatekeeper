@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import { fileURLToPath } from 'node:url';
+import test from 'node:test';
+import { createEngine } from '../src/engine.js';
+import { loadArtifacts } from '../src/artifacts.js';
+import { experimentalPracticeEncoder } from '../src/encoding.js';
+import { ProcessProver } from '../src/prover.js';
+import { SQLiteStore } from '../src/store.js';
+import { sampleTask } from './fixtures.js';
+
+test('the bundled real Gatekeeper circuit verifies a practice trap rejection using the candidate encoder', async t => {
+  const store = new SQLiteStore(':memory:');
+  t.after(() => store.close());
+  const encoder = experimentalPracticeEncoder();
+  const artifacts = await loadArtifacts(fileURLToPath(new URL('../circuits', import.meta.url)));
+  const prover = new ProcessProver(artifacts);
+  const task = sampleTask({ proof_tx: `0x${'aB'.repeat(16)}`, recipient: `0x${'34'.repeat(20)}` });
+  const raw = Buffer.from(JSON.stringify(task));
+  const engine = createEngine({ store, practiceEncoder: encoder, prover });
+  const response = await engine.handle(task, raw, new AbortController().signal);
+  assert.equal(typeof response, 'object');
+  if (typeof response === 'string') throw new Error('expected proof response');
+  assert.equal(response.decision, 'REJECT');
+  assert.equal(response.reason_code, 'RECIPIENT_MISMATCH');
+  assert.ok(response.proof);
+  assert.equal(response.public_signals?.length, 13);
+  assert.equal(response.public_signals?.[11], '0');
+  assert.equal(await prover.verify({ proof: response.proof!, public_signals: response.public_signals! }, AbortSignal.timeout(10_000)), true);
+  assert.equal(response.proof_tx, undefined);
+  assert.equal(engine.ready(), false);
+});

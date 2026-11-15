@@ -7,6 +7,27 @@ import { FIELD, type NumericWitness } from './prover.js';
 
 // /build does not specify these mappings. No guessed mapping is enabled or shipped.
 export interface Encoder { encodeVk(vk: string): string; encodeTaskId(id: string): string }
+
+/**
+ * Unverified black-box candidate for UNscored practice only. Independent public
+ * participant code suggests integer VK hashes reduced mod BN128 and SHA-256 of
+ * UTF-8 task IDs reduced mod BN128. The official accepted mapping is unpublished;
+ * never select this encoder for competition or readiness.
+ */
+export function experimentalPracticeEncoder(): Encoder {
+  return {
+    encodeVk(vk) {
+      if (typeof vk !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(vk)) throw new Error('ENCODING_INVALID');
+      return (BigInt(vk) % FIELD).toString();
+    },
+    encodeTaskId(id) {
+      if (typeof id !== 'string' || id.length === 0) throw new Error('ENCODING_INVALID');
+      const digest = createHash('sha256').update(id, 'utf8').digest('hex');
+      return (BigInt('0x' + digest) % FIELD).toString();
+    },
+  };
+}
+
 export async function loadPinnedEncoder(options: { modulePath?: string; sha256?: string }): Promise<Encoder | undefined> {
   if (!options.modulePath && !options.sha256) return undefined;
   if (!options.modulePath || !isAbsolute(options.modulePath) || !options.sha256 || !/^[a-f0-9]{64}$/.test(options.sha256)) throw new Error('ENCODING_INTEGRITY');

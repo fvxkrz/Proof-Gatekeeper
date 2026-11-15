@@ -8,7 +8,7 @@ import type { SQLiteStore } from './store.js';
 import { configuredReferenceVerifier, validateReferenceEvidence, type ReferenceVerifier } from './reference.js';
 import { isCanonicalProofReference } from './proof-reference.js';
 
-interface Options { store: SQLiteStore; prover: Prover; encoder?: Encoder; finalizer?: Finalizer; referenceVerifier?: ReferenceVerifier; shutdownSignal?: AbortSignal; maxInFlight?: number; proofTimeoutMs?: number }
+interface Options { store: SQLiteStore; prover: Prover; encoder?: Encoder; practiceEncoder?: Encoder; finalizer?: Finalizer; referenceVerifier?: ReferenceVerifier; shutdownSignal?: AbortSignal; maxInFlight?: number; proofTimeoutMs?: number }
 export interface Engine {
   handle(task: Task, raw: Buffer, signal: AbortSignal): Promise<AgentResponse | string>;
   onOutcome(task: Task, raw: Buffer, signal: AbortSignal, wireBody: string): void;
@@ -53,10 +53,6 @@ export function createEngine(options: Options): Engine {
     handle: async (task, raw, signal) => {
       const expire = Math.min(Date.parse(task.deadline_at), Date.parse(task.issued_at) + 60_000);
       if (signal.aborted || options.shutdownSignal?.aborted || !Number.isFinite(expire) || Date.now() >= expire) return reject('TIMEOUT');
-      // Recognize the authenticated request without promoting an opaque practice
-      // reference into chain evidence, including through a legacy cached APPROVE.
-      // No lookup, canonicalization, replay reservation or proof work is allowed.
-      if (!isCanonicalProofReference(task.input.proof_tx)) return reject('REFERENCE_UNCONFIRMED');
       const bodyHash = createHash('sha256').update(raw).digest('hex');
       let reservation;
       try { reservation = options.store.reserve(task.task_id, bodyHash, task.input.proof_tx, Date.now()); }
@@ -67,6 +63,9 @@ export function createEngine(options: Options): Engine {
         case 'cached': {
           try {
             if ((JSON.parse(reservation.body) as AgentResponse).decision === 'APPROVE') {
+              // Never replay a legacy cached approval for an opaque/malformed
+              // reference; it is not evidence of a finalized transaction.
+              if (!isCanonicalProofReference(task.input.proof_tx)) return reject('REFERENCE_UNCONFIRMED');
               if (!options.encoder) return reject('PROTOCOL_ENCODING_UNCONFIRMED');
               // Revalidate historical evidence even for old ledger entries written
               // before this activation gate existed. Never resubmit the task proof.
@@ -86,15 +85,35 @@ export function createEngine(options: Options): Engine {
       active++;
       try {
         const policy = evaluatePolicy(task.input);
-        if (!options.encoder) return reject(policy.decision === 'REJECT' ? policy.reason_code : 'PROTOCOL_ENCODING_UNCONFIRMED');
-        if (!referenceVerifier) return reject('REFERENCE_UNCONFIRMED');
+        // An otherwise valid task needs a real original-reference binding before
+        // any approval path. Trap rejections can still be proven in practice;
+        // do not let an opaque reference turn into an approval proof.
+        if (policy.decision === 'APPROVE' && !isCanonicalProofReference(task.input.proof_tx)) {
+          return reject('REFERENCE_UNCONFIRMED');
+        }
+        // The candidate encoder is an explicitly opted-in, unscored practice
+        // experiment. It can only prove circuit REJECT traps, never approvals
+        // or scored responses, and never contributes to readiness.
+        const usePracticeEncoder = task.mode === 'practice' && policy.decision === 'REJECT'
+          && options.practiceEncoder !== undefined;
+        const encoder = usePracticeEncoder ? options.practiceEncoder : options.encoder;
+        // The circuit can prove a rejection that follows its public numeric
+        // conditions; historical proof evidence is mandatory before any approval.
+        // The incoming proof_tx is only an opaque replay key and is not a circuit input.
+        if (policy.decision === 'APPROVE') {
+          if (!referenceVerifier) return reject('REFERENCE_UNCONFIRMED');
+          if (!await referenceConfirmed(task, deadlineSignal)) return reject('REFERENCE_UNCONFIRMED');
+        }
+        if (!encoder) return reject(policy.decision === 'REJECT' ? policy.reason_code : 'PROTOCOL_ENCODING_UNCONFIRMED');
         deadlineSignal.throwIfAborted();
-        if (!await referenceConfirmed(task, deadlineSignal)) return reject('REFERENCE_UNCONFIRMED');
-        const witness = buildWitness(task, policy.decision, options.encoder);
+        const witness = buildWitness(task, policy.decision, encoder);
         const proofSignal = AbortSignal.any([deadlineSignal, AbortSignal.timeout(options.proofTimeoutMs ?? 15_000)]);
         const bundle = await bounded(() => options.prover.prove(witness, proofSignal), proofSignal);
         proofSignal.throwIfAborted();
         assertPublicBinding(bundle, witness);
+        // Practice rejection proofs need local Groth16 validity only; never
+        // submit them to Kurier. Scored-mode finality is unchanged below.
+        if (usePracticeEncoder) return { ...policy, ...bundle };
         if (!options.finalizer) return policy.decision === 'REJECT' ? { ...policy, ...bundle } : reject('FINALITY_UNCONFIRMED');
         const finalizer = options.finalizer;
         const evidence = await bounded(() => finalizer.finalize(bundle, deadlineSignal), deadlineSignal);

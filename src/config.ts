@@ -18,6 +18,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
   if (network === 'mainnet' && env.ALLOW_MAINNET !== 'true') return fail();
   const agentPath = env.AGENT_PATH ?? '/agent';
   if (!/^\/[a-zA-Z0-9/_-]+$/.test(agentPath) || agentPath.includes('//') || ['/healthz','/readyz'].includes(agentPath)) return fail();
+  const practiceEncoder = env.PRACTICE_ENCODER ?? '';
+  if (practiceEncoder !== '' && practiceEncoder !== 'sha256-vk-modp-taskid-sha256-modp-v1') return fail();
   const vkHash = env.KURIER_VK_HASH || undefined;
   if (vkHash && !/^0x[0-9a-fA-F]{64}$/.test(vkHash)) return fail();
   if (network === 'mainnet' && vkHash?.toLowerCase() !== MAINNET_VK_HASH) return fail();
@@ -31,5 +33,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env) {
     dbPath: resolve(env.DB_PATH ?? './data/gatekeeper.sqlite'), artifactsDir: resolve(env.ARTIFACTS_DIR ?? './circuits'),
     apiKey: env.KURIER_API_KEY || undefined, vkHash,
     encodingModule: env.ENCODING_MODULE || undefined, encodingDigest: env.ENCODING_MODULE_SHA256 || undefined,
+    practiceEncoder: practiceEncoder || undefined,
   };
 }

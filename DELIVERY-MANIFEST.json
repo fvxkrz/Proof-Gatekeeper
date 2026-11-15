@@ -1,42 +1,57 @@
 {
-  "format": "proof-gatekeeper-delivery/v2",
-  "generated_utc": "2026-11-15T11:53:33.419501+00:00",
+  "format": "proof-gatekeeper-delivery/v4",
+  "generated_utc": "2026-11-15T19:41:55.942226+00:00",
   "source_repository": "https://github.com/fvxkrz/Proof-Gatekeeper",
-  "scope": "source sync for the deployed fail-closed Proof Gatekeeper service",
+  "source_branch": "main after reviewed practice-proof release",
+  "scope": "opt-in unscored practice proofs for circuit-detectable REJECT traps; scored readiness remains fail-closed",
   "verification": {
     "typecheck": "passed",
     "tests": {
-      "passed": 150,
+      "passed": 158,
       "failed": 0
     },
     "build": "passed",
     "replay": {
-      "real_groth16_proofs_generated_and_verified": 6,
+      "official_circuit_proofs_verified_locally": 6,
       "network": "MOCKED_ONLY",
       "platform_encoding": "SYNTHETIC_ONLY",
       "historical_reference": "MOCKED_ONLY",
       "live_chain_finality_verified": false
     },
+    "practice_candidate_loopback": "real official-circuit Groth16 REJECT locally verified; entrypoint HTTP test passes; NOT Agent Games platform acceptance",
     "official_artifacts": "verified",
     "production_dependency_audit_vulnerabilities": 0,
-    "independent_security_review": "passed; no concrete security concerns or logic errors reported for exact-width proof-reference guard"
+    "independent_review": "passed with no concrete security or logic concerns for scoped practice path"
+  },
+  "practice_encoder": {
+    "value": "sha256-vk-modp-taskid-sha256-modp-v1",
+    "status": "unverified community candidate",
+    "enabled_on_host": "unscored practice only",
+    "selection_guard": "practice mode AND deterministic policy REJECT",
+    "never_used_for": [
+      "APPROVE",
+      "competition",
+      "Kurier submission",
+      "readiness"
+    ],
+    "proof_claim": "proves the locally encoded task numeric REJECT statement, not the opaque original proof_tx; platform acceptance pending"
   },
   "deployment": {
-    "public_endpoint": "https://fvxkrz-agent.duckdns.org/agent",
-    "public_health_status": 200,
-    "public_readiness_status": 503,
-    "practice_observation": "one user-provided dashboard screenshot reports a correct REJECT; unscored only",
+    "endpoint": "https://fvxkrz-agent.duckdns.org/agent",
+    "candidate_release": "pending deployment",
+    "current_health_http": 200,
+    "readiness_http": 503,
     "competition_ready": false
   },
-  "public_ci_for_this_snapshot": "pending push; workflow runs on GitHub after update",
+  "github_actions_for_this_commit": "pending push/run",
   "external_blockers": [
-    "official condition-VK and task-ID field encoding plus accepted platform proof vector",
-    "authoritative original proof_tx lookup and statement-binding/finality contract",
-    "live testnet Kurier finality with a testnet-registered decision verification key"
+    "official condition VK and task-ID field encodings or organizer accepted proof vector",
+    "authoritative original proof_tx lookup and statement-binding contract for approvals",
+    "Agent Games accepted practice proof using candidate before making any platform-acceptance claim"
   ],
   "private_env_included": false,
   "local_verification_report_included": false,
-  "source_file_count": 63,
+  "source_file_count": 66,
   "files": [
     {
       "path": ".dockerignore",
@@ -45,8 +60,8 @@
     },
     {
       "path": ".env.example",
-      "bytes": 791,
-      "sha256": "ed35cc3175ab6422c2c8a24fa33e2e9787d2744aa0ea8553138b078abd32a1b4"
+      "bytes": 1008,
+      "sha256": "98afd45553d9c68656f3fbf711e0767f9700415cdf83c6c864c9d844506f3333"
     },
     {
       "path": ".github/workflows/ci.yml",
@@ -65,8 +80,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 16907,
-      "sha256": "a8522b0a568ab38a2dc78ce415e2633397ddcc0391e9d4bad8153b26934657d1"
+      "bytes": 17760,
+      "sha256": "35a9bf9ffa7c736c1f3d46aa123ed58e0dcd86c3689ed0df10815b7c8813d5db"
     },
     {
       "path": "circuits/artifacts.manifest.json",
@@ -115,13 +130,13 @@
     },
     {
       "path": "docs/PROTOCOL_GAPS.md",
-      "bytes": 7813,
-      "sha256": "63ddc258a5ad8acbc4afc96de9b1a57d188dd1084f510904a5490f0f810fc51c"
+      "bytes": 9324,
+      "sha256": "ee51ffbd1d6627e468581ad83e5ed62966c29bb73fd673698e9da613dd606a62"
     },
     {
       "path": "docs/VERIFICATION.md",
-      "bytes": 6004,
-      "sha256": "1447a1ceed777203a0efaa6aafe665ac68d8dceab4f6bab913087efd4fa0ce17"
+      "bytes": 7467,
+      "sha256": "924f0771aa9f487c8444025641eddabe5e6249fddfa768b79b297236b5073027"
     },
     {
       "path": "docs/official-build-snapshot.txt",
@@ -180,8 +195,8 @@
     },
     {
       "path": "src/config.ts",
-      "bytes": 2292,
-      "sha256": "21228f78177dd0a37aabf03db5bdcafa70701137206491a3d8d9c8d72759ca4d"
+      "bytes": 2504,
+      "sha256": "5796ae55c67cd10081e9487859ea257c4e8b07d7348a1060d0ed98c8770d5db9"
     },
     {
       "path": "src/diagnostics.ts",
@@ -190,28 +205,28 @@
     },
     {
       "path": "src/encoding.ts",
-      "bytes": 2487,
-      "sha256": "117d613cfa823403295609be59bc55ca3c9697fc57004d9f5c6d2069f1aebf3a"
+      "bytes": 3306,
+      "sha256": "ae32e2dd89a46faae880d4ae5daff04fb0afef8ea09501ad1dc65bd5fb1d5ef3"
     },
     {
       "path": "src/engine.ts",
-      "bytes": 7207,
-      "sha256": "9e46d8f7ecb4cd24bff2ea41b626543cc3d856c40e7e8668b9a61902aa265501"
+      "bytes": 8503,
+      "sha256": "a47a4760a2393cd911ff9006fd9f84f41de7b731facc1bc9eec2b019279b046f"
     },
     {
       "path": "src/main.ts",
-      "bytes": 2819,
-      "sha256": "43cde9dd57c75089c0f366bd2ddfef56067a1619c933560c4e860015c77075f9"
+      "bytes": 2951,
+      "sha256": "b0c1b66356ad1768a2774dcf29f700ba64ee759c4177ae877a71fd6993642b06"
     },
     {
       "path": "src/policy.ts",
-      "bytes": 2192,
-      "sha256": "7ac7ddf58845d4ab2393a7541d88116d0709082c8544cb2a43609efc23b59072"
+      "bytes": 2254,
+      "sha256": "42097a6f56565369bfa101beeb898c336efedd957c9b69c4208e1c94495d7c77"
     },
     {
       "path": "src/proof-reference.ts",
-      "bytes": 259,
-      "sha256": "de4126dc664616a5879227aa6439c2c2e7eccf00db197f309780c1ebb1e6700e"
+      "bytes": 262,
+      "sha256": "bb110de5fda5f9bd8c271b062c0a5209f605c1a07a926879767699c4ee66bd4e"
     },
     {
       "path": "src/protocol.ts",
@@ -240,8 +255,8 @@
     },
     {
       "path": "src/store.ts",
-      "bytes": 2901,
-      "sha256": "cff63343dbe7fb1fb4cc76f37c108f8192570f5e2674ebff5e5744850e34dea7"
+      "bytes": 3016,
+      "sha256": "021f704a68927648baa8f83e1301ed22659572c150b7e2a8ddd4123331eda79f"
     },
     {
       "path": "src/zkverify.ts",
@@ -260,8 +275,8 @@
     },
     {
       "path": "tests/config.test.ts",
-      "bytes": 1097,
-      "sha256": "cc22456bdd76331ab65c55a4c130b84f6fab03e0c48ebff4ff24fd7b28a58c82"
+      "bytes": 1470,
+      "sha256": "54aa94f8d5eeef1e1b780f4132bc60ad9ed945f1c848de4a833b3700a97299f2"
     },
     {
       "path": "tests/diagnostics.test.ts",
@@ -275,13 +290,13 @@
     },
     {
       "path": "tests/engine-http.test.ts",
-      "bytes": 11358,
-      "sha256": "642fe77def05e9f3190d041acce77370e425618d944e1542558523a9ef3e8a93"
+      "bytes": 11350,
+      "sha256": "cfdfece3308cc28d2b01a67c6819c035231304a5d70f5ba8874caeb8581af3e4"
     },
     {
       "path": "tests/engine.test.ts",
-      "bytes": 16678,
-      "sha256": "b09146a271c218baff3103e2dd1de627b8dd4e22ab45a073dff8f86e26ac658d"
+      "bytes": 16670,
+      "sha256": "82f52d90adafb3efd67e2456d2172c0aced120a4681e5dd03ef80489bf4165ca"
     },
     {
       "path": "tests/fixtures.ts",
@@ -295,8 +310,8 @@
     },
     {
       "path": "tests/policy.test.ts",
-      "bytes": 5456,
-      "sha256": "994e7f2062e439f595f4911202e07834be3c94b2313abfd071703842de831326"
+      "bytes": 5447,
+      "sha256": "f6faa1f47cb4783cd007a414adf4a207adee050242830384c77e06a7e7215811"
     },
     {
       "path": "tests/portability.test.ts",
@@ -304,9 +319,24 @@
       "sha256": "a667df35373bd71ea5485c98bbb7cb9a36f637645ef56ccb290af088e2cbbd90"
     },
     {
+      "path": "tests/practice-circuit.test.ts",
+      "bytes": 1712,
+      "sha256": "88d59b00c057039ad00db03c337c185b51918d6ae74b8572d0867d946766136a"
+    },
+    {
+      "path": "tests/practice-http-proof.test.ts",
+      "bytes": 5623,
+      "sha256": "412bc49840725f278fdbd325e155ba1a06cd16ffc4809a4115a3ef3f8a2fa25a"
+    },
+    {
+      "path": "tests/practice-proof.test.ts",
+      "bytes": 5431,
+      "sha256": "7fbb6f4b1a2084b63ebdff799dd29f9b9fadf736d3f5646891259691da21179f"
+    },
+    {
       "path": "tests/practice-reference.test.ts",
-      "bytes": 7702,
-      "sha256": "ffa52f95b08f17e7479f9c9007fd92ff96e8d640aed368a2739712414f9e4edd"
+      "bytes": 8010,
+      "sha256": "a96c2dfb7cf65e59842f3847e6212ee94a02ce65d595056da2357f6dd75a7591"
     },
     {
       "path": "tests/protocol.test.ts",

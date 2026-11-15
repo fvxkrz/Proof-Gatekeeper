@@ -261,7 +261,7 @@ test('missing official field encodings prevent approval and never fabricate a pr
     assert.notEqual(typeof response, 'string');
     if (typeof response === 'string') throw new Error('expected response draft');
     assert.equal(response.decision, 'REJECT');
-    assert.equal(response.reason_code, 'PROTOCOL_ENCODING_UNCONFIRMED');
+    assert.equal(response.reason_code, 'REFERENCE_UNCONFIRMED');
     assert.equal(response.proof, undefined);
     assert.equal(engine.ready(), false);
   } finally { store.close(); }

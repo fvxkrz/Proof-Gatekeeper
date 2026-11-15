@@ -3,7 +3,7 @@
 ## Executed locally
 
 - Strict TypeScript checking: passed (`npm run typecheck`).
-- Automated tests: **150 passed, 0 failed**, including nested security cases and
+- Automated tests: **158 passed, 0 failed**, including nested security cases and
   a portable-temporary-directory regression for clean CI users.
 - Compiled ESM build: passed (`npm run build`).
 - Replay harness: **6 actual Groth16 proofs generated and verified** with the
@@ -39,6 +39,17 @@
   a synthetic 34-character reference and a synthetic 67-character line-terminated
   hash. These are unit/integration fixtures, not captured task contents or chain
   verification evidence.
+- Added a separate compiled-circuit loopback integration test using the public,
+  unverified candidate encoder and a synthetic recipient-mismatch task. The real
+  official WASM/zkey generated a 13-signal Groth16 REJECT; snarkjs independently
+  verified it. HTTP response HMAC, 55-second response budget, byte-identical cached
+  retry, one proof generation, and readiness 503 were checked. Runtime was ~3.4s
+  in the observed test run. This is LOCAL_ONLY candidate-encoding evidence, not a
+  task from Agent Games and not platform-accepted proof evidence.
+- Added an entrypoint-level integration test that starts `src/main.ts` with the
+  explicit practice opt-in and verifies a signed, locally proof-checked REJECT
+  over loopback, while readiness remains 503. This only verifies configuration
+  wiring and local cryptographic behavior.
 - The new final implementation diff received an independent security review with
   no concrete security concerns or logic errors. The review does not certify the
   unresolved platform/chain contracts below.
@@ -60,10 +71,11 @@ before changing implementation. Tests now cover:
 - Shutdown, proof cancellation, malformed finality, public-signal mismatches,
   store failures and uncooperative dependencies fail closed.
 
-The final independent implementation re-review **passed**, with no reported
-security concerns or logic errors. The complete suite then passed: **150 tests**.
-The implementation review does not certify the external compatibility/chain
-prerequisites below.
+The final independent implementation review of the practice-proof path **passed**,
+with no reported security concerns or logic errors; reviewers noted that local
+verification is not organizer acceptance and that proof_tx is not a circuit
+signal. The complete suite then passed: **158 tests**. The review does not
+certify the external compatibility/chain prerequisites below.
 
 ## Not executed / still blocked
 
@@ -80,6 +92,13 @@ prerequisites below.
   at least one practice task whose screenshot reported a correct REJECT. A single
   practice outcome does not validate all trap types, every proof path, or scored
   round readiness. `/readyz` intentionally remains 503.
+- The practice-only candidate encoder is opt-in in the host `.env` and disabled
+  by default in `.env.example`. It is explicitly designed only for locally
+  provable REJECT traps and cannot prove a valid request's false rejection. It
+  is not used for competition or APPROVE. Do not
+  count its local proof results as verified proofs until the platform accepts a
+  genuine signed practice task under this mode. The host is now configured for
+  unscored practice only; no platform acceptance is claimed yet.
 - Dashboard HMAC values and other production credentials are stored only in the
   host `.env` (permissions 0600), excluded from Git and not included here.
 - Docker is not installed here, so the container build/non-root read-only runtime

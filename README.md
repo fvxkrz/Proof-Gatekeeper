@@ -14,16 +14,17 @@ No guessed hash/reduction is enabled. Until a reviewed official encoder is
 provided, valid-looking tasks receive signed `REJECT /
 PROTOCOL_ENCODING_UNCONFIRMED`, no invented proof, and `/readyz` returns 503.
 The incoming `proof_tx` is preserved exactly as an opaque wire reference (nonempty,
-up to 256 characters). A reference that is not an exact 32-byte `0x` transaction
-hash is never padded, trimmed, lowercased, or looked up: after HMAC authentication
-the service returns a signed HTTP 200 `REJECT / REFERENCE_UNCONFIRMED` before any
-replay-cache access, proof generation, or external submission. Exact hash syntax
-alone still does not prove that the original transaction is finalized or bound to
-the submitted statement. No authoritative lookup/binding contract is published.
-`src/main.ts` therefore leaves the internal `ReferenceVerifier` adapter disabled.
-Supplying an encoder and new-proof finalizer alone still cannot enable readiness
-or approval. Do not activate this configuration for scored rounds: deliberate
-safe rejections and missing proofs can lose points.
+up to 256 characters) and used without alteration as a replay key. Exact 32-byte
+hash syntax alone does not prove that the original transaction is finalized or
+bound to the submitted statement. No authoritative lookup/binding contract is
+published, so `src/main.ts` leaves the internal `ReferenceVerifier` adapter
+disabled. A detectable circuit trap (such as recipient mismatch) can receive a
+local proof of REJECT in opted-in unscored practice; opaque references never enter
+the circuit witness. An otherwise-valid request is still rejected as
+`REFERENCE_UNCONFIRMED`, without proof. Supplying a candidate encoder and
+new-proof finalizer alone cannot enable readiness or approval. Do not activate
+this configuration for scored rounds: safe rejections or missing proofs can lose
+points.
 
 The service and real circuit prover are implemented and locally testable. The
 public endpoint `https://fvxkrz-agent.duckdns.org/agent` is deployed behind Caddy;
@@ -61,13 +62,21 @@ changed artifacts instead of silently trusting a changed proving key.
 - `src/store.ts`: atomic task/reference reservations, cached byte-for-byte results,
   durable SQLite WAL, persisted in-progress records fail closed after a crash.
 - `src/encoding.ts`: disabled-by-default, hash-pinned local encoder extension point.
+- `PRACTICE_ENCODER=sha256-vk-modp-taskid-sha256-modp-v1` opts into an
+  experimental practice-only candidate encoding reported by public participant
+  repositories. It can generate locally verified rejection proofs for circuit-
+  detectable traps; it is not an official accepted mapping, is never used for
+  APPROVE or competition tasks, never makes `/readyz` ready, and is never sent to
+  Kurier. Leave it unset until explicitly running unscored practice. The
+  host `.env` was configured for unscored practice only; public acceptance is
+  not yet confirmed.
 - `src/reference.ts`: internal historical-evidence interface and pure runtime binding
   validation; no guessed lookup endpoint, remote attestation, or boolean bypass.
 - `src/prover.ts`, `src/prover-child.ts`: killable subprocesses generate and verify
   real proofs using the pinned artifacts. They do not inherit API/HMAC secrets.
 - `src/zkverify.ts`: fixed official network hosts, proof submission and polling.
-- `src/engine.ts`: fail-closed handling of opaque references before replay/cache
-  access, historical-reference gate, proof binding, replay protection,
+- `src/engine.ts`: fail-closed handling of opaque references on approval paths,
+  practice-only REJECT proving, historical-reference gate, proof binding, replay protection,
   new-proof finality-before-approval, and transport-owned outcome recording.
 - `scripts/replay.ts`: local replay harness; synthetic tasks, real circuit proofs,
   explicitly simulated Kurier and historical-reference evidence. It does not claim
@@ -198,11 +207,14 @@ the service uses port 3001 because 3000 is occupied). Keep `.env` mode 0600 and
 out of Git, persist `data/`, then enable the unit. Do not stop or reconfigure an
 unrelated host service to free a port.
 
-The deployed endpoint's public `/healthz` has been verified as HTTP 200, and one
-dashboard practice result reported a correct REJECT. `/readyz` remains 503 until
-the official condition/task encodings and an authoritative historical-reference
-verification adapter exist; preflight and one practice response do not clear
-those gates.
+The deployed endpoint's public `/healthz` has been verified as HTTP 200. The host
+is now configured to try the unverified candidate only on unscored practice
+circuit-REJECT traps. Local real-circuit proof tests pass, but platform acceptance
+is not yet confirmed; require the Agent Games dashboard to show “Proof VERIFIED”
+for a newly dispatched practice trap before claiming success. `/readyz` remains
+503 until official condition/task encodings and an authoritative historical-
+reference verification adapter exist; the practice-only candidate cannot enable
+approval or competition readiness.
 
 ### Existing host Caddy (e.g. the Tencent VPS already running Caddy)
 

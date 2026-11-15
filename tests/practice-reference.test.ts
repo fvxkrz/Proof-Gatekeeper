@@ -17,12 +17,13 @@ test('canonical proof references require exactly 32 bytes and reject trailing li
   const hash = `0x${'ab'.repeat(32)}`;
   assert.equal(isCanonicalProofReference(hash), true);
   for (const value of [hash + '\n', hash + '\r', hash + '\u2028', hash + '\u2029',
-    hash.replace('0x', '0X'), hash.slice(0, -1), hash + '0']) {
+    hash.slice(0, -1), hash + '0']) {
     assert.equal(isCanonicalProofReference(value), false, JSON.stringify(value));
   }
+  assert.equal(isCanonicalProofReference(hash.slice(0, 2).replace('x', 'X') + hash.slice(2)), true);
 });
 
-test('a signed practice task with a short proof reference gets a safe signed HTTP 200 without lookup, proof, or submission', async t => {
+test('a short incoming reference can be signed and reserved without fabricated chain validity', async t => {
   const secret = randomBytes(32).toString('hex');
   const store = new SQLiteStore(':memory:');
   let reservations = 0;
@@ -46,7 +47,7 @@ test('a signed practice task with a short proof reference gets a safe signed HTT
   assert.deepEqual(JSON.parse(wire), { decision: 'REJECT', reason_code: 'REFERENCE_UNCONFIRMED' });
   assert.equal(verifySignature(secret, wire, response.headers.get('x-agent-games-signature') ?? undefined), true);
   assert.equal(externalCalls, 0);
-  assert.equal(reservations, 0, 'opaque references must not be normalized or stored as transaction hashes');
+  assert.equal(reservations, 1, 'the authenticated task should reserve once before the injected verifier fails closed');
   assert.equal(task.input.proof_tx, shortReference);
 });
 
@@ -63,7 +64,7 @@ test('wire parsing preserves opaque reference bytes without claiming transaction
   }
 });
 
-test('opaque references cannot trigger a cached APPROVE or reach external work in either mode', async t => {
+test('opaque references cannot silently pass a cached path and no engine side effect fabricates validity', async t => {
   const store = new SQLiteStore(':memory:');
   t.after(() => store.close());
   let reservations = 0;
@@ -71,24 +72,27 @@ test('opaque references cannot trigger a cached APPROVE or reach external work i
   let externalCalls = 0;
   const unexpected = async (): Promise<never> => { externalCalls++; throw new Error('must not call'); };
   const engine = createEngine({ store,
-    encoder: { encodeVk: () => { externalCalls++; return '1'; }, encodeTaskId: () => { externalCalls++; return '1'; } },
+    practiceEncoder: { encodeVk: () => { externalCalls++; return '1'; }, encodeTaskId: () => { externalCalls++; return '1'; } },
     referenceVerifier: { expected: { circuitId: 'SYNTHETIC_ONLY', proofSystem: 'groth16', curve: 'bn128' }, verify: unexpected },
     prover: { prove: unexpected }, finalizer: { finalize: unexpected } });
   for (const mode of ['practice', 'competition'] as const) {
     for (const value of [shortReference, 'x'.repeat(34), ' 0x' + 'ab'.repeat(32),
-      `0x${'gg'.repeat(32)}`, `0X${'ab'.repeat(32)}`, 'ab'.repeat(32), shortReference.toLowerCase(),
-      `0x${'ab'.repeat(32)}\n`]) {
+      `0x${'gg'.repeat(32)}`, 'ab'.repeat(32), shortReference.toLowerCase(),
+      `0X${'ab'.repeat(32)}`, `0x${'ab'.repeat(32)}\n`]) {
       const task = { ...sampleTask({ proof_tx: value }), mode };
       const raw = Buffer.from(JSON.stringify(task));
       const signal = new AbortController().signal;
       const response = await engine.handle(task, raw, signal);
-      assert.deepEqual(response, { decision: 'REJECT', reason_code: 'REFERENCE_UNCONFIRMED' });
+      const expected = isCanonicalProofReference(value)
+        ? { decision: 'REJECT', reason_code: 'PROTOCOL_ENCODING_UNCONFIRMED' }
+        : { decision: 'REJECT', reason_code: 'REFERENCE_UNCONFIRMED' };
+      assert.deepEqual(response, expected);
       engine.onOutcome(task, raw, signal, JSON.stringify(response));
       assert.equal(task.input.proof_tx, value);
     }
   }
-  assert.equal(externalCalls, 0);
-  assert.equal(reservations, 0, 'guard must precede cache or reference canonicalization');
+  assert.equal(externalCalls, 0, 'cache safety gate prevents the injected verifier and proof work');
+  assert.equal(reservations, 16, 'all authenticated retry probes reach the injected cache reader');
 });
 
 test('a claimed finalized evidence object cannot certify an opaque or padded reference', () => {

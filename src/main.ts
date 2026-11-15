@@ -1,7 +1,7 @@
 import { pathToFileURL } from 'node:url';
 import { loadConfig } from './config.js';
 import { loadArtifacts } from './artifacts.js';
-import { loadPinnedEncoder } from './encoding.js';
+import { experimentalPracticeEncoder, loadPinnedEncoder } from './encoding.js';
 import { ProcessProver } from './prover.js';
 import { SQLiteStore } from './store.js';
 import { KurierClient } from './zkverify.js';
@@ -18,6 +18,7 @@ export async function startService(config = loadConfig()) {
   // No historical-reference adapter is enabled: its authoritative lookup/binding
   // contract is unpublished. An encoder and new-proof finality alone cannot activate.
   const engine = createEngine({ store, prover: new ProcessProver(artifacts), ...(encoder ? { encoder } : {}),
+    ...(config.practiceEncoder && !encoder ? { practiceEncoder: experimentalPracticeEncoder() } : {}),
     ...(finalizer ? { finalizer } : {}), shutdownSignal: stop.signal,
     maxInFlight: config.maxInFlight, proofTimeoutMs: config.proofTimeoutMs });
   const server = createServer({ secret: config.secret, agentPath: config.agentPath, bodyLimit: config.bodyLimit,

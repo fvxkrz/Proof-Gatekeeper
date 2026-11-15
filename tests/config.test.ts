@@ -12,7 +12,12 @@ test('configuration requires the dashboard secret and defaults to testnet with b
   assert.equal(config.secret, secret);
   assert.equal(config.responseBudgetMs, 55_000);
   assert.equal(config.agentPath, '/agent');
+  assert.equal(config.practiceEncoder, undefined);
+  assert.equal(module.loadConfig({ AGENT_GAMES_HMAC_SECRET: secret,
+    PRACTICE_ENCODER: 'sha256-vk-modp-taskid-sha256-modp-v1' }).practiceEncoder,
+  'sha256-vk-modp-taskid-sha256-modp-v1');
   assert.throws(() => module.loadConfig({ AGENT_GAMES_HMAC_SECRET: secret, ZKVERIFY_NETWORK: 'mainnet' }), /CONFIGURATION/);
   assert.throws(() => module.loadConfig({ AGENT_GAMES_HMAC_SECRET: secret, RESPONSE_BUDGET_MS: '60001' }), /CONFIGURATION/);
   assert.throws(() => module.loadConfig({ AGENT_GAMES_HMAC_SECRET: secret, AGENT_PATH: '/' }), /CONFIGURATION/);
+  assert.throws(() => module.loadConfig({ AGENT_GAMES_HMAC_SECRET: secret, PRACTICE_ENCODER: 'guessed-prod' }), /CONFIGURATION/);
 });

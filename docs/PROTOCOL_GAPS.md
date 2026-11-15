@@ -52,6 +52,25 @@ Hash-pin that trusted local module with `ENCODING_MODULE_SHA256` and configure i
 absolute path through `ENCODING_MODULE`. There is no URL download or model call.
 Any additional imports/dependencies of an operator encoder also require review.
 
+For **unscored practice rejection proofs only**, an explicit `PRACTICE_ENCODER`
+opt-in may enable the unverified black-box candidate
+`sha256-vk-modp-taskid-sha256-modp-v1`: condition VK bytes become the integer
+represented by the hex bytes modulo the BN128 field prime; a free-form task ID
+becomes `SHA-256(UTF-8(task_id)) mod p`. Public participant repositories report
+that formula, but another implementation uses the first 31 SHA-256 bytes; neither
+is organizer-confirmed. The candidate is restricted in code to mode `practice`
+and policy decisions that are REJECT. It is never used for any APPROVE, any
+competition-mode request, Kurier submission, `/readyz`, or a cache of approvals.
+The host `.env` is now configured to opt into this for unscored practice only;
+that mapping remains unverified by Agent Games. Only a practice checker result
+for a real task can establish platform acceptance; local Groth16 verification
+alone cannot.
+To disable this experiment, remove `PRACTICE_ENCODER` from the host `.env` and
+restart the service. Already-completed identical task retries continue to return
+their cached signed bytes (including any practice proof) to preserve HTTP
+idempotency; disabling the encoder blocks new experimental proofs, not an already
+consumed task's cached response.
+
 The service separately binds the numeric amount, threshold, block heights,
 recipient and circuit decision to the returned public signals. The encoder
 cannot swap the requested action or recipient. It must preserve VK equality;
@@ -63,12 +82,15 @@ The official incoming example contains a `proof_tx` reference. A real signed
 practice request was observed with a 34-character string; length alone does not
 establish that it is a chain transaction hash. Transport accepts a nonempty string
 up to 256 characters (a local operational bound), preserving its contents exactly.
-A reference that is not a full 32-byte `0x` hash receives a signed HTTP 200 safety
-REJECT (`REFERENCE_UNCONFIRMED`) before replay storage, cache reads, lookup or proof
-work. It is never padded, truncated, case-normalized, resolved or promoted to
-finalized evidence. The evidence validator still requires complete hashes. This
-fixes the observed transport rejection, not proof coverage or platform practice
-acceptance; a proof-less rejection may still incur a game penalty.
+A reference is never padded, truncated, trimmed, lowercased, or promoted to
+finalized evidence. The SQLite replay ledger preserves opaque reference bytes;
+canonical transaction hashes are compared case-insensitively by bytes. An opaque
+reference blocks approval and stale cached approvals. A circuit-detectable trap
+may still produce a local practice-only REJECT proof, because `proof_tx` is not a
+circuit signal; the proof does not attest to that original reference. The evidence
+validator still requires exact-width hashes. This fixes the observed transport
+400, not proof-reference coverage or platform acceptance; an off-circuit-only
+rejection may remain proof-less and incur a game penalty.
 
 The public task contract does not include the original proof/public-signal object,
 proof-system identifier, finalized block location, or documented historical-evidence

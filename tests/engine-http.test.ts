@@ -93,7 +93,7 @@ test('the real service wires handler and outcome to the same request identity', 
   const address = `http://127.0.0.1:${socket.port}`;
   const raw = JSON.stringify(sampleTask());
   const first = await send(address, secret, raw);
-  assert.deepEqual(JSON.parse(first), { decision: 'REJECT', reason_code: 'PROTOCOL_ENCODING_UNCONFIRMED' });
+  assert.deepEqual(JSON.parse(first), { decision: 'REJECT', reason_code: 'REFERENCE_UNCONFIRMED' });
   assert.equal(await send(address, secret, raw), first);
   assert.equal((await fetch(address + '/readyz')).status, 503);
   assert.equal(service.ready(), false);
